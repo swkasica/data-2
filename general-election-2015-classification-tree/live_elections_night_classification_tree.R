@@ -1,23 +1,23 @@
 
-
-# define root path
-basis <- ''
-
 library(gdata)
 library(XLConnect)
 library(utils)
 
+perl='C:\\Strawberry\\perl\\bin\\perl5.30.0.exe'
+
 # load socio-economic factors from NOMIS database
-gender_density <- read.xls(paste(basis,'/The Times/Elections/PostElection/20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xlsx',sep=''),stringsAsFactors=FALSE,sheet='Census 2011 Resident Population')
-age <- read.xls(paste(basis,'/The Times/Elections/PostElection/20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xlsx',sep=''),stringsAsFactors=FALSE,sheet='Census 2011 Age Structure')
-ethnic <- read.xls(paste(basis,'/The Times/Elections/PostElection/20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xlsx',sep=''),stringsAsFactors=FALSE,sheet='Census 2011 Ethnic Group')
-house <- read.xls(paste(basis,'/The Times/Elections/PostElection/20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xlsx',sep=''),stringsAsFactors=FALSE,sheet='Census 2011 Tenure')
-socgrade <- read.xls(paste(basis,'/The Times/Elections/PostElection/20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xlsx',sep=''),stringsAsFactors=FALSE,sheet='Census 2011 Social Grade')
-claimants <-read.xls(paste(basis,'/The Times/Elections/PostElection/20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xlsx',sep=''),stringsAsFactors=FALSE,sheet='Claimant Count Mar 2015')
-business<-read.xls(paste(basis,'/The Times/Elections/PostElection/20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xlsx',sep=''),stringsAsFactors=FALSE,sheet='UK Business Counts 2014')
-jobsdensity<-read.xls(paste(basis,'/The Times/Elections/PostElection/20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xlsx',sep=''),stringsAsFactors=FALSE,sheet='Jobs Density 2013')
-educ<-read.xls(paste(basis,'/The Times/Elections/PostElection/20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xlsx',sep=''),stringsAsFactors=FALSE,sheet='Census 2011 Qualifications')
-APsheet <- read.xls(paste(basis,'/The Times/Elections/PostElection/20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xlsx',sep=''),stringsAsFactors=FALSE,sheet='AP sheet')
+gender_density <- read.xls('20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xls', stringsAsFactors=FALSE, sheet='Census 2011 Resident Population', perl=perl)
+age <- read.xls('20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xls',stringsAsFactors=FALSE,sheet='Census 2011 Age Structure', perl=perl)
+ethnic <- read.xls('20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xls',stringsAsFactors=FALSE,sheet='Census 2011 Ethnic Group', perl=perl)
+house <- read.xls('20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xls',stringsAsFactors=FALSE,sheet='Census 2011 Tenure', perl=perl)
+socgrade <- read.xls('20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xls',stringsAsFactors=FALSE,sheet='Census 2011 Social Grade', perl=perl)
+claimants <-read.xls('20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xls',stringsAsFactors=FALSE,sheet='Claimant Count Mar 2015', perl=perl)
+business<-read.xls('20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xls',stringsAsFactors=FALSE,sheet='UK Business Counts 2014', perl=perl)
+jobsdensity<-read.xls('20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xls',stringsAsFactors=FALSE,sheet='Jobs Density 2013', perl=perl)
+educ<-read.xls('20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xls',stringsAsFactors=FALSE,sheet='Census 2011 Qualifications', perl=perl)
+
+# A sheet named APsheet isn't in the .xlsx file, so I'm just guessing
+APsheet <- read.xls('20150429_PostElectionsAnalysis_NOMIS_DDJ_DecisionTreeData.xls',stringsAsFactors=FALSE,sheet='Annual Population Survey Dec 20', perl=perl)
 
 # normalise data
 business$Micro.Perc <- business$Micro..0.to.9./business$Total
@@ -44,7 +44,7 @@ names(house)[c(6,8,10,12,14)]<-c('Owner.Perc','Shared.Owner','Soc.Rent','Private
 house <- house[,c(2,6,8,10,12,14)]
 data_all<-merge(data_all,house)
 data_all<-merge(data_all,socgrade)
-names(claimants)[[4]]<-'Claimants'
+names(claimants)[[4]] <- 'Claimants'
 claimants<-claimants[,c(2,4)]
 data_all<-merge(data_all,claimants)
 data_all<-merge(data_all,business)
@@ -53,114 +53,117 @@ data_all<-merge(data_all,jobsdensity)
 educ <- educ[,c(2,4,8,14)]
 names(educ)<-c('Code','QualNO','GCSE.Max','HE.Above')
 data_all<-merge(data_all,educ,all.x=TRUE)
-names(APsheet)[[5]]<-'Code'
-APsheet <- APsheet[,c(2,3,5)]
+
+# APsheet isn't in the .xlsx file
+# let's guess they wanted Code (2), employment rate (9), and unemployment rate 13
+APsheet <- APsheet[,c(2, 9, 13)]
 data_all <- merge(data_all,APsheet)
-data_all$AP.Name <- sapply(as.character(data_all$AP.Name),function(x) gsub('&amp;','&',x),USE.NAMES = FALSE)
-# 
+# data_all$AP.Name <- sapply(as.character(data_all$AP.Name),function(x) gsub('&amp;','&',x),USE.NAMES = FALSE)
+
+#
 # #### get elections data #### 
 # 
-# library(RJSONIO)
-# results <- fromJSON(url,simplify = FALSE)
 # 
-# results2015 <- data.frame()
-# for (result in results) {
-#   
-#   names <- result[[1]]$name
-#   winners <- result[[1]]$winningParty
-#   before <- result[[1]]$sittingParty
-#   
-#   Votes.C <- as.numeric(result[[1]]$results$C$votes)
-#   Votes.Lab <- as.numeric(result[[1]]$results$Lab$votes)
-#   Votes.LD <- as.numeric(result[[1]]$results$LD$votes)
-#   Votes.UKIP <- as.numeric(result[[1]]$results$UKIP$votes)
-#   Votes.Green <- as.numeric(result[[1]]$results$Green$votes)
-#   Votes.SNP <- as.numeric(result[[1]]$results$SNP$votes)
-#   Votes.DUP <- as.numeric(result[[1]]$results$DUP$votes)
-#   Votes.C.Share <- as.numeric(result[[1]]$results$C$percentageShare)
-#   Votes.Lab.Share <- as.numeric(result[[1]]$results$Lab$percentageShare)
-#   Votes.LD.Share <- as.numeric(result[[1]]$results$LD$percentageShare)
-#   Votes.UKIP.Share <- as.numeric(result[[1]]$results$UKIP$percentageShare)
-#   Votes.Green.Share <- as.numeric(result[[1]]$results$Green$percentageShare)
-#   Votes.SNP.Share <- as.numeric(result[[1]]$results$SNP$percentageShare)
-#   Votes.DUP.Share <- as.numeric(result[[1]]$results$DUP$percentageShare)
-#   
-#   if (length(Votes.UKIP)==0) {Votes.UKIP=0}
-#   if (length(Votes.UKIP.Share)==0) {Votes.UKIP.Share=0}
-#   if (length(Votes.Lab)==0) {Votes.Lab=0}
-#   if (length(Votes.Lab.Share)==0) {Votes.Lab.Share=0}
-#   if (length(Votes.C)==0) {Votes.C=0}
-#   if (length(Votes.C.Share)==0) {Votes.C.Share=0}
-#   if (length(Votes.LD)==0) {Votes.LD=0}
-#   if (length(Votes.LD.Share)==0) {Votes.LD.Share=0}
-#   if (length(Votes.Green)==0) {Votes.Green=0}
-#   if (length(Votes.Green.Share)==0) {Votes.Green.Share=0}
-#   if (length(Votes.SNP)==0) {Votes.SNP=0}
-#   if (length(Votes.SNP.Share)==0) {Votes.SNP.Share=0}
-#   if (length(Votes.DUP)==0) {Votes.DUP=0}
-#   if (length(Votes.DUP.Share)==0) {Votes.DUP.Share=0}
-#   
-#   tots_temp <- Votes.SNP.Share+Votes.Green.Share+Votes.LD.Share+Votes.C.Share+Votes.Lab.Share+Votes.UKIP.Share+Votes.DUP.Share
-#   tots_temp_2 <- Votes.SNP+Votes.Green+Votes.LD+Votes.C+Votes.Lab+Votes.UKIP+Votes.DUP
-#   tots_others <- (100*tots_temp_2/tots_temp)-tots_temp_2
-#   tots_others_perc <- 100*tots_others/(100*tots_temp_2/tots_temp)
-#   
-#   temp <- data.frame(Names=names,X2015.result=winners,X2010.result=before,Votes.C=Votes.C,
-#                      Votes.Lab=Votes.Lab,Votes.LD=Votes.LD,Votes.UKIP=Votes.UKIP,Votes.Green=Votes.Green,Votes.SNP=Votes.SNP,
-#                      Votes.C.Share=Votes.C.Share,Votes.Lab.Share=Votes.Lab.Share,Votes.LD.Share=Votes.LD.Share,
-#                      Votes.UKIP.Share=Votes.UKIP.Share,Votes.Green.Share=Votes.Green.Share,Votes.SNP.Share=Votes.SNP.Share,Votes.Others=tots_others,Votes.Others.Share=tots_others_perc)
-#   if (nrow(results2015)>0) {
-#     results2015<-rbind(results2015,temp)
-#   } else {
-#     results2015<-temp
-#   }
-#   
-# }
-# 
-# 
-# results2015$X2015.result<-as.character(results2015$X2015.result)
-# results2015$Names<-as.character(results2015$Names)
-# results2015$X2010.result<-as.character(results2015$X2010.result)
-# nrow(results2015)
+hocl <- read.csv('hocl-ge2015-results-summary.csv')
+
+Votes.C <- hocl$con
+Votes.Lab <- hocl$lab
+Votes.LD <- hocl$ld
+Votes.UKIP <- hocl$ukip
+Votes.Green <- hocl$green
+Votes.SNP <- hocl$snp
+Votes.DUP <- hocl$dup
+
+# I think this is what was meant by shares
+Votes.C.Share <- hocl$con / hocl$valid_votes
+Votes.Lab.Share <- hocl$lab / hocl$valid_votes
+Votes.LD.Share <- hocl$ld / hocl$valid_votes
+Votes.UKIP.Share <- hocl$ukip / hocl$valid_votes
+Votes.Green.Share <- hocl$green / hocl$valid_votes
+Votes.SNP.Share <- hocl$snp / hocl$valid_votes
+Votes.DUP.Share <- hocl$dup / hocl$valid_votes
+
+tots_temp <- Votes.SNP.Share+Votes.Green.Share+Votes.LD.Share+Votes.C.Share+Votes.Lab.Share+Votes.UKIP.Share+Votes.DUP.Share
+tots_temp_2 <- Votes.SNP+Votes.Green+Votes.LD+Votes.C+Votes.Lab+Votes.UKIP+Votes.DUP
+tots_others <- (100*tots_temp_2/tots_temp)-tots_temp_2
+tots_others_perc <- 100*tots_others/(100*tots_temp_2/tots_temp)
+
+# Get that 2010 general election data.
+before <- sapply(hocl$result, function(res) {
+  if (length(res) > 0 && grepl('hold', res)) {
+    return(gsub(' hold', '', res))
+  } else {
+    return(gsub('[A-Za-z]+ gain from ', '', res))
+  }
+})
+
+temp <- data.frame(Names=hocl$constituency_name,
+                   X2015.result=hocl$first_party,
+                   X2010.result=before,
+                   Votes.C=Votes.C,
+                   Votes.Lab=Votes.Lab,
+                   Votes.LD=Votes.LD,
+                   Votes.UKIP=Votes.UKIP,
+                   Votes.Green=Votes.Green,
+                   Votes.SNP=Votes.SNP,
+                   Votes.C.Share=Votes.C.Share,
+                   Votes.Lab.Share=Votes.Lab.Share,
+                   Votes.LD.Share=Votes.LD.Share,
+                   Votes.UKIP.Share=Votes.UKIP.Share,
+                   Votes.Green.Share=Votes.Green.Share,
+                   Votes.SNP.Share=Votes.SNP.Share,
+                   Votes.Others=tots_others,
+                   Votes.Others.Share=tots_others_perc)
+
+
+results2015<-temp
+results2015$Code = hocl$ons_id
+
+results2015$X2015.result<-as.character(hocl$first_party)
+results2015$Names<-as.character(results2015$Names)
+results2015$X2010.result<-as.character(results2015$X2010.result)
+nrow(results2015)
+
 # # fix the parties names
-# parties <- c('Conservative','Labour','Liberal Democrats','Ukip','Scottish National Party')
-# results2015$X2015.result[results2015$X2015.result=='C']<-'Conservative'
-# results2015$X2015.result[results2015$X2015.result=='Lab']<-'Labour'
-# results2015$X2015.result[results2015$X2015.result=='LD']<-'Liberal Democrats'
-# results2015$X2015.result[results2015$X2015.result=='UKIP']<-'Ukip'
-# results2015$X2015.result[results2015$X2015.result=='SNP']<-'Scottish National Party'
-# results2015$X2015.result[!(results2015$X2015.result %in% parties)] <- 'Other'
-# 
-# results2015$X2010.result[results2015$X2010.result=='C']<-'Conservative'
-# results2015$X2010.result[results2015$X2010.result=='Lab']<-'Labour'
-# results2015$X2010.result[results2015$X2010.result=='LD']<-'Liberal Democrats'
-# results2015$X2010.result[results2015$X2010.result=='UKIP']<-'Ukip'
-# results2015$X2010.result[results2015$X2010.result=='SNP']<-'Scottish National Party'
-# results2015$X2010.result[!(results2015$X2010.result %in% parties)] <- 'Other'
-# 
+results2015$X2015.result[results2015$X2015.result=='Con']<-'Conservative'
+results2015$X2015.result[results2015$X2015.result=='Lab']<-'Labour'
+results2015$X2015.result[results2015$X2015.result=='LD']<-'Liberal Democrats'
+results2015$X2015.result[results2015$X2015.result=='UKIP']<-'Ukip'
+results2015$X2015.result[results2015$X2015.result=='SNP']<-'Scottish National Party'
+
+parties <- c('Conservative','Labour','Liberal Democrats','Ukip','Scottish National Party')
+results2015$X2015.result[!(results2015$X2015.result %in% parties)] <- 'Other'
+
+results2015$X2010.result[results2015$X2010.result=='Con']<-'Conservative'
+results2015$X2010.result[results2015$X2010.result=='Lab']<-'Labour'
+results2015$X2010.result[results2015$X2010.result=='LD']<-'Liberal Democrats'
+results2015$X2010.result[results2015$X2010.result=='UKIP']<-'Ukip'
+results2015$X2010.result[results2015$X2010.result=='SNP']<-'Scottish National Party'
+results2015$X2010.result[!(results2015$X2010.result %in% parties)] <- 'Other'
+
 # names(results2015)[[1]]<-'AP.Name'
-# data_all<-merge(data_all,results2015,all.x=TRUE)
-# data_all[is.na(data_all$X2015.result),]
+data_all<-merge(data_all,results2015,all.x=TRUE)
+data_all[is.na(data_all$X2015.result),]
+
 # 
 # # match new results to codes data
-# names(results2010)
-# table(results2015$X2015.result)
-# table(results2015[,c('X2015.result','X2010.result')])
-# sum(table(results2015$X2015.result))
+table(results2015$X2015.result)
+table(results2015[,c('X2015.result','X2010.result')])
+sum(table(results2015$X2015.result))
 # 
-# table(data_all[,c('X2015.result','Region')])
+table(data_all[,c('X2015.result','Region')])
 
 
 #### get turnout by const #####
 
-load(paste(basis,'/The Times/Elections/PostElection/turnout.RData',sep=''))
-turnout2010<-read.csv(paste(basis,'/The Times/Elections/PostElection/turnout2010.csv',sep=''))
+load('turnout.RData')
+turnout2010<-read.csv('turnout2010.csv')
 
 names(turnout_data)[[2]]<-'Turnout.2015'
 data_all<-merge(data_all,turnout_data)
 
-data_all$Electorate <- 100*(data_all$Votes.C+data_all$Votes.Lab+data_all$Votes.LD+data_all$Votes.UKIP+data_all$Votes.Green+
-                              data_all$Votes.SNP+data_all$Votes.Others)/data_all$Turnout.2015
+data_all$Electorate <- 100*(data_all$Votes.C + data_all$Votes.Lab + data_all$Votes.LD + data_all$Votes.UKIP + data_all$Votes.Green +
+                              data_all$Votes.SNP+data_all$Votes.Others ) / data_all$Turnout.2015
 
 data_all<-merge(data_all,turnout2010)
 
@@ -180,13 +183,17 @@ table(data_all[,c('TurnoutHasIncreased','X2015.result')])
 aggregate(TurnoutDifference~X2015.result,median,data=data_all)
 aggregate(TurnoutDifference~X2015.result,mean,data=data_all)
 aggregate(TurnoutDifference~X2015.result,sd,data=data_all)
-data_all$SwingSeats <- data_all$X2015.result!=data_all$X2010.result
+data_all$SwingSeats <- data_all$X2015.result != data_all$X2010.result
+
 quantile(data_all$TurnoutDifference,seq(0,1,0.1))
+
 data_all$Engaged <- 'Normal'
 data_all$Engaged[data_all$TurnoutDifference>3] <- 'Engaged'
 data_all$Engaged[data_all$TurnoutDifference<=-1.1] <- 'Disengaged'
+
 table(data_all[,c('X2015.result','Engaged')])
 table(data_all[,c('SwingSeats','Engaged')])
+
 temp<-data_all[data_all$Engaged=='Disengaged' & data_all$SwingSeats==TRUE,]
 
 data_structured <- data_all[,c(34,42:47,49,50)]
@@ -209,13 +216,21 @@ node.fun1 <- function(x, labs, digits, varlen)
 }
 
 data_all$Mean.Age<-NULL
+# Rename Median.Age to Age
 names(data_all)[[8]] <- 'Age'
+
+# Rename Micro.Perc and Small.Perc to Micro.bsns and Small.Bsns, respectively
 names(data_all)[24:25] <- c('Micro.Bsns','Small.Bsns')
-data_all$Big.Bsns <- data_all$Medium.Perc+data_all$Large.Perc
-data_all$OneMinusSmallBsns <- data_all$Medium.Perc+data_all$Large.Perc
+data_all$Big.Bsns <- business$Medium.Perc+business$Large.Perc
+data_all$OneMinusSmallBsns <- business$Medium.Perc+business$Large.Perc
+
+# Drop .Perc from these column names
 names(data_all)[19:22]<-c('AB','C1','C2','DE')
+
+# Rename Other to Other.Eth
 names(data_all)[[13]]<-'Other.Eth'
-data_all$Owner <- data_all$Owner.Perc+data_all$Shared.Owner
+
+data_all$Owner <- house$Owner.Perc+house$Shared.Owner
 data_all$Owner.Perc<-NULL
 data_all$Shared.Owner<-NULL
 data_all$Region[data_all$Region=='North East' | data_all$Region=='North West' | data_all$Region=='Yorkshire and The Humber'] <- 'North'
@@ -237,9 +252,9 @@ library(rpart.plot)
 ######## Explore trees as results come in ###########
 
 # without scotland
-tree <- rpart(X2015.result~Soc.Rent+GCSE.Max+Male+Female+Density+Age+
-                Claimants,data=data_all[data_all$Region!='Scotland',],
-              control=rpart.control(minsplit=2, cp=0.0001,minbucket=3,maxdepth=3),method='class')
+tree <- rpart(X2015.result~Soc.Rent+GCSE.Max+Male+Female+Density+Age+Claimants, 
+              data=data_all[data_all$Region!='Scotland',],
+              control=rpart.control(minsplit=2, cp=0.0001, minbucket=3, maxdepth=3), method='class')
 
 prp(tree, extra=100, under=T, yesno=T, node.fun=node.fun1,main ="All Constituencies (No Scotland)",branch.type=5)
 print(tree)
