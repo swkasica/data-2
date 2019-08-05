@@ -1,6 +1,6 @@
 # General Election 2015 Classification Tree
 
-This branch is where I got the R script to execute using plausable data. I can't guarantee that this is the correct data, but using historical data is "correct enough" for my purposes. 
+This branch is where I performed open coding on the version of the R script I got to work in the up-and-running branch. I can't guarantee that this is the correct data, but using historical data is "correct enough" for my purposes. 
 
 ## Steve's notes
 
